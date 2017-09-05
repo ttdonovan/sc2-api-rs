@@ -1,0 +1,6 @@
+[package]
+name = "s2-api"
+version = "0.1.0"
+authors = ["Tanner Donovan <ttdonovan@gmail.com>"]
+
+[dependencies]
