@@ -1,5 +1,7 @@
 // use errors::*;
+use sc2api::Response;
 
+use prost::Message;
 use ws::{self, connect, Handler, Handshake, Sender};
 
 use std::error::Error;
@@ -21,7 +23,9 @@ impl Handler for Client {
     }
 
     fn on_message(&mut self, msg: ws::Message) -> Result<(), ws::Error> {
-        println!("on_message: {}", msg);
+        if let Ok(response) = Response::decode(msg.into_data()) {
+            println!("{:?}", response);
+        };
 
         Ok(())
     }
