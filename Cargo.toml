@@ -1,14 +1,16 @@
 [package]
-name = "s2-api"
-version = "0.1.0"
+name = "sc2-api"
+version = "0.0.1"
 authors = ["Tanner Donovan <ttdonovan@gmail.com>"]
 
 build = "build.rs"
 
 [dependencies]
 bytes = "0.4"
+error-chain = "0.11"
 prost = "0.2"
 prost-derive = "0.2"
+ws = "0.7"
 
 [build-dependencies]
 prost-build = "0.2"

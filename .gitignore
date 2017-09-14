@@ -1,3 +1,4 @@
+/sandbox/
 /target/
 **/*.rs.bk
 Cargo.lock
