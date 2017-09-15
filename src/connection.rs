@@ -1,18 +1,21 @@
 // use errors::*;
-use sc2api::Response;
+use sc2api::{response, Response};
 
 use prost::Message;
-use ws::{self, connect, Handler, Handshake, Sender};
+use ws::{self, connect, Handler, Handshake};
 
 use std::error::Error;
-use std::thread;
+use std::sync::mpsc::{channel, Receiver, Sender};
+use std::thread::{self, JoinHandle};
 
 pub struct Connection {
-    // conn_thread: thread::JoinHandle<()>,
+    recv_ch: Receiver<response::Response>,
+    conn_thread: JoinHandle<()>,
 }
 
 pub struct Client {
-    out: Sender,
+    tx: Sender<response::Response>,
+    out: ws::Sender,
 }
 
 impl Handler for Client {
@@ -23,8 +26,8 @@ impl Handler for Client {
     }
 
     fn on_message(&mut self, msg: ws::Message) -> Result<(), ws::Error> {
-        if let Ok(response) = Response::decode(msg.into_data()) {
-            println!("{:?}", response);
+        if let Ok(r) = Response::decode(msg.into_data()) {
+            self.tx.send(r.response.unwrap()).unwrap();
         };
 
         Ok(())
@@ -32,19 +35,34 @@ impl Handler for Client {
 }
 
 impl Connection {
-    pub fn connect() -> Result<(), Box<Error>> {
+    pub fn connect() -> Result<(Connection), Box<Error>> {
+        let (recv_tx, recv_rx) = channel();
+
         let thread = thread::Builder::new()
             .name("StarCraft connection".into())
             .spawn(move || {
                 connect("ws://127.0.0.1:5000/sc2api", |out| {
                     Client {
-                        out: out
+                        tx: recv_tx.clone(),
+                        out: out,
                     }
                 }).unwrap()
             }).unwrap();
 
-        let _ = thread.join();
+        let connection = Connection {
+            recv_ch: recv_rx,
+            conn_thread: thread,
+        };
 
-        Ok(())
+        Ok(connection)
+    }
+
+    pub fn recv_response(&mut self) -> Result<(response::Response), Box<Error>> {
+        // The `recv` method picks a message from the channel
+        // `recv` will block the current thread if there are no messages available
+        match self.recv_ch.recv() {
+            Ok(r) => Ok(r),
+            Err(_) => { panic!() }
+        }
     }
 }
