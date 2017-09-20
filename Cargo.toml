@@ -1,13 +1,14 @@
 [package]
+authors = ["Tanner Donovan <ttdonovan@gmail.com>", "Michael-F-Bryan <michaelfbryan@gmail.com>"]
+build = "build.rs"
 name = "sc2-api"
 version = "0.0.1"
-authors = ["Tanner Donovan <ttdonovan@gmail.com>"]
-
-build = "build.rs"
 
 [dependencies]
 bytes = "0.4"
+env_logger = "0.4.3"
 error-chain = "0.11"
+log = "0.3.8"
 prost = "0.2"
 prost-derive = "0.2"
 ws = "0.7"

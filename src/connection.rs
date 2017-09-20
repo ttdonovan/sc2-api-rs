@@ -1,13 +1,13 @@
-// use errors::*;
+use errors::*;
 use sc2api::{response, Response};
 
 use prost::Message;
-use ws::{self, connect, Handler, Handshake};
+use ws::{self, connect, Handler, Handshake, Result as WsResult};
 
-use std::error::Error;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 
+#[derive(Debug)]
 pub struct Connection {
     recv_ch: Receiver<response::Response>,
     conn_thread: JoinHandle<()>,
@@ -19,13 +19,13 @@ pub struct Client {
 }
 
 impl Handler for Client {
-    fn on_open(&mut self, _: Handshake) -> Result<(), ws::Error> {
+    fn on_open(&mut self, _: Handshake) -> WsResult<()> {
         println!("on_open");
 
         Ok(())
     }
 
-    fn on_message(&mut self, msg: ws::Message) -> Result<(), ws::Error> {
+    fn on_message(&mut self, msg: ws::Message) -> WsResult<()> {
         if let Ok(r) = Response::decode(msg.into_data()) {
             self.tx.send(r.response.unwrap()).unwrap();
         };
@@ -35,7 +35,7 @@ impl Handler for Client {
 }
 
 impl Connection {
-    pub fn connect() -> Result<(Connection), Box<Error>> {
+    pub fn connect() -> Result<Connection> {
         let (recv_tx, recv_rx) = channel();
 
         let thread = thread::Builder::new()
@@ -47,7 +47,8 @@ impl Connection {
                         out: out,
                     }
                 }).unwrap()
-            }).unwrap();
+            })
+            .unwrap();
 
         let connection = Connection {
             recv_ch: recv_rx,
@@ -57,12 +58,12 @@ impl Connection {
         Ok(connection)
     }
 
-    pub fn recv_response(&mut self) -> Result<(response::Response), Box<Error>> {
+    pub fn recv_response(&mut self) -> Result<response::Response> {
         // The `recv` method picks a message from the channel
         // `recv` will block the current thread if there are no messages available
         match self.recv_ch.recv() {
             Ok(r) => Ok(r),
-            Err(_) => { panic!() }
+            Err(_) => panic!(),
         }
     }
 }
