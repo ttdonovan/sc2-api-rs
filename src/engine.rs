@@ -1,4 +1,4 @@
-use std::fmt::{self, Debug, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 
 use connection::Connection;
@@ -30,7 +30,7 @@ impl Engine {
 
     /// Add a new bot to the bot list.
     pub fn with_bot<B: Bot + 'static>(mut self, bot: B) -> Engine {
-        let tok = Token::new();
+        let tok = Token::unique();
         self.bots.push((tok, Box::new(bot)));
         self
     }
@@ -47,6 +47,8 @@ impl Engine {
 
     /// Do any necessary jobs to start the game.
     fn start_game(&mut self) {
+        debug!("Creating game");
+
         for &mut (_, ref mut bot) in &mut self.bots {
             bot.game_start();
         }
@@ -56,6 +58,8 @@ impl Engine {
 
     /// Tidy up at the end of a game.
     fn end_game(&mut self) {
+        debug!("Finished the game");
+
         for &mut (_, ref mut bot) in &mut self.bots {
             bot.game_end();
         }
@@ -65,7 +69,8 @@ impl Engine {
         self.update_game_state();
 
         for &mut (tok, ref mut bot) in &mut self.bots {
-            bot.tick(&self.game_state);
+            let actions = bot.tick(&self.game_state);
+            debug!("Bot {} executed {:?}", tok, actions);
         }
     }
 
@@ -75,6 +80,9 @@ impl Engine {
         //
         // for now just stop the game so we don't have an infinite loop
         self.game_state.running = false;
+
+        debug!("Game updated");
+        debug!("{:?}", self.game_state);
     }
 }
 
@@ -93,15 +101,23 @@ pub struct GameState {
     running: bool,
 }
 
+/// A unique token which is associated with exactly one bot. This allows us to
+/// track which bot did what.
 #[derive(Debug, Copy, Clone, PartialEq)]
 struct Token(usize);
 
 impl Token {
     /// Create a new, globally unique token.
-    fn new() -> Token {
+    fn unique() -> Token {
         static NEXT_TOKEN: AtomicUsize = ATOMIC_USIZE_INIT;
         let tok = NEXT_TOKEN.fetch_add(1, Ordering::Relaxed);
 
         Token(tok)
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

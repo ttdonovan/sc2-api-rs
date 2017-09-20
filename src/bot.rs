@@ -26,6 +26,14 @@ impl ActionSet {
     pub fn empty() -> ActionSet {
         ActionSet::default()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.actions.is_empty()
+    }
+
+    pub(crate) fn actions(&self) -> ::std::slice::Iter<Action> {
+        self.actions.iter()
+    }
 }
 
 
