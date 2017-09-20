@@ -13,7 +13,7 @@ mod bot;
 
 pub use connection::Connection;
 pub use engine::{Engine, GameState};
-pub use bot::Bot;
+pub use bot::{Action, ActionSet, Bot};
 
 
 pub mod sc2api {
