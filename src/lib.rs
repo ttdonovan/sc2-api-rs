@@ -15,9 +15,10 @@ mod bot;
 
 pub use connection::Connection;
 pub use engine::{Engine, GameState};
-pub use bot::{Action, ActionSet, Bot};
+pub use bot::{Action, Bot};
 
 
+/// Bindings to the raw protobuf API.
 pub mod sc2api {
     include!(concat!(env!("OUT_DIR"), "/sc2api_protocol.rs"));
 }

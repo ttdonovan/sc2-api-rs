@@ -96,6 +96,7 @@ impl Debug for Engine {
 }
 
 
+/// The state of the game world.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct GameState {
     running: bool,
