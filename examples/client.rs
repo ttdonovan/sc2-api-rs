@@ -1,6 +1,6 @@
 extern crate sc2_api;
 
-use sc2_api::sc2api::response::Response;
+use sc2_api::raw_protobuf_api::response::Response;
 
 // use std::process::Command;
 
