@@ -1,7 +1,7 @@
 extern crate env_logger;
 extern crate sc2_api;
 
-use sc2_api::{ActionSet, Engine, GameState};
+use sc2_api::{Engine, GameState};
 
 fn main() {
     env_logger::init().expect("Couldn't initialize logger");
@@ -10,7 +10,7 @@ fn main() {
         .expect("Couldn't create a new game engine")
         .with_bot(|game_state: &GameState| {
             println!("The current game state is: {:?}", game_state);
-            ActionSet::empty()
+            None
         });
 
     engine.run();
