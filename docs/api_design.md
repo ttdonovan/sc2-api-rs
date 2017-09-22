@@ -20,19 +20,20 @@ s2_api
         |-- `act()`, `observe()`, `ping()`, ...
     |-- Protocol
         |-- `send()` and `receive()`
-|-- SC2API
-    |-- Request/Response
+|-- RawProtobufAPI
+    |-- SC2API Request/Response
         |-- (protocol types)
 ```
 
 ## Bot
 
-The agent used to infer **GameState** and take an **Action**. The **Bot** will
-be notified of **GameState** via a `tick()`.
+The agent used to inspect **GameState** and take an **Action**. At every game
+frame, the bot's `tick()` method will be called to let the bot inspect the
+current game state and emit actions (if desired).
 
 ### Action
 
-In-game actions that can be performed by a **Bot**.
+A dumb `enum` of all the actions a `Bot` can emit.
 
 ## Connection
 
@@ -60,9 +61,9 @@ Primarily used to `act()` and `observe()`. Also will be able to make
 
 ### Protocol
 
-Will send and receive **SC2API** request and response via a **Connection**.
+Will send and receive raw protobuf **SC2API** request and response via a **Connection**.
 
-## SC2API
+## RawProtobufAPI
 
 The generated protocols from the [s2client-proto](https://github.com/Blizzard/s2client-proto)
 Protocol Buffers. These protocols will primarily be utilized by the
