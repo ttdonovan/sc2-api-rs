@@ -1,43 +1,25 @@
 use engine::GameState;
 
+/// The trait implemented by a single actor in the game.
 pub trait Bot {
-    fn tick(&mut self, game_state: &GameState) -> ActionSet;
+    /// Callback called at every game tick so the bot can inspect the state
+    /// of the world and queue new actions.
+    fn tick(&mut self, game_state: &GameState) -> Option<Action>;
     fn game_start(&mut self) {}
     fn game_end(&mut self) {}
 }
 
 impl<F> Bot for F
 where
-    F: FnMut(&GameState) -> ActionSet,
+    F: FnMut(&GameState) -> Option<Action>,
 {
-    fn tick(&mut self, game_state: &GameState) -> ActionSet {
+    fn tick(&mut self, game_state: &GameState) -> Option<Action> {
         self(game_state)
     }
 }
 
 
-/// A set of queued actions to be executed on the next tick.
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct ActionSet {
-    actions: Vec<Action>,
-}
-
-impl ActionSet {
-    pub fn empty() -> ActionSet {
-        ActionSet::default()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.actions.is_empty()
-    }
-
-    pub(crate) fn actions(&self) -> ::std::slice::Iter<Action> {
-        self.actions.iter()
-    }
-}
-
-
-/// A single in-game action.
+/// An in-game action.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Quit,

@@ -1,5 +1,5 @@
 use errors::*;
-use sc2api::{response, Response};
+use raw_protobuf_api::{response, Response};
 
 use prost::Message;
 use ws::{self, connect, Handler, Handshake, Result as WsResult};
