@@ -12,19 +12,24 @@ fn main() {
     //     println!("StarCraft failed to start");
     // }
 
-    println!("make connection...");
+    println!("Connecting...");
     let mut conn = sc2_api::Connection::connect().expect("connect failed");
 
     println!("Ready.");
-    loop {
-        match conn.recv_response() {
-            Ok(Response::Observation(r)) => { println!("Observation {:?}", r) },
-            Ok(Response::Quit(_)) => {
-                println!("Quit.");
-                break;
-            },
-            Ok(_) => { },
-            _ => { panic!("something has gone wrong") }
-        };
-    }
+    let _ = conn.send_thread.join();
+    let _ = conn.recv_thread.join();
+
+    println!("Exit.");
+
+    // loop {
+    //     match conn.recv_response() {
+    //         Ok(Response::Observation(r)) => { println!("Observation {:?}", r) },
+    //         Ok(Response::Quit(_)) => {
+    //             println!("Quit.");
+    //             break;
+    //         },
+    //         Ok(_) => { },
+    //         _ => { panic!("something has gone wrong") }
+    //     };
+    // }
 }
