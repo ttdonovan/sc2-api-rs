@@ -55,7 +55,7 @@ impl Connection {
         let (send_tx, send_rx) = channel();
         let send_thread = thread::spawn(move || {
             loop {
-                let msg = match send_rx.recv() {
+                let msg : OwnedMessage = match send_rx.recv() {
                     Ok(m) => m,
                     Err(e) => {
                         debug!("Send Loop: {:?}", e);
@@ -63,14 +63,13 @@ impl Connection {
                     },
                 };
 
-                // FIXME: lifetime issues?
-                // match client_rx.send_message(msg) {
-                //     Ok(()) => (),
-                //     Err(e) => {
-                //         debug!("Send Loop: {:?}", e);
-                //         return;
-                //     }
-                // }
+                match client_rx.send_message(&msg) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        debug!("Send Loop: {:?}", e);
+                        return;
+                    }
+                }
             }
         });
 
