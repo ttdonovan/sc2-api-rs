@@ -1,6 +1,6 @@
 extern crate sc2_api;
 
-use sc2_api::raw_protobuf_api::response::Response;
+use sc2_api::raw_protobuf_api as raw_pb;
 
 // use std::process::Command;
 
@@ -16,20 +16,17 @@ fn main() {
     let mut conn = sc2_api::Connection::connect().expect("connect failed");
 
     println!("Ready.");
-    let _ = conn.send_thread.join();
-    let _ = conn.recv_thread.join();
 
-    println!("Exit.");
+    // try to send a Ping request
+    let req = raw_pb::Request {
+        request: Some(raw_pb::request::Request::Ping(raw_pb::RequestPing {})),
+    };
+    conn.send_request(req);
 
-    // loop {
-    //     match conn.recv_response() {
-    //         Ok(Response::Observation(r)) => { println!("Observation {:?}", r) },
-    //         Ok(Response::Quit(_)) => {
-    //             println!("Quit.");
-    //             break;
-    //         },
-    //         Ok(_) => { },
-    //         _ => { panic!("something has gone wrong") }
-    //     };
-    // }
+    loop {
+        match conn.recv_response() {
+            Ok(r) => { println!("{:?}", r) },
+            _ => { panic!("something has gone wrong") }
+        };
+    }
 }
