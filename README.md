@@ -21,6 +21,11 @@ git submodule update --init --recursive
 cargo run --example simple_bot
 ```
 
+### API Design
+
+An overview of the API design can be found in
+[`api_design.md`](docs/api_design.md).
+
 ### Dev Notes
 
 Additional development notes and tips can be found in [`NOTES.md`](NOTES.md).
