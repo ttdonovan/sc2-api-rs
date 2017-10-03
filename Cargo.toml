@@ -11,7 +11,7 @@ error-chain = "0.11"
 log = "0.3.8"
 prost = "0.2"
 prost-derive = "0.2"
-ws = "0.7"
+websocket = "0.20"
 
 [build-dependencies]
 prost-build = "0.2"
