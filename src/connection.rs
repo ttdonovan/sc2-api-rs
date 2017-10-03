@@ -1,69 +1,101 @@
 use errors::*;
-use raw_protobuf_api::{response, Response};
+use raw_protobuf_api as raw_pb;
 
 use prost::Message;
-use ws::{self, connect, Handler, Handshake, Result as WsResult};
+use websocket::OwnedMessage;
+use websocket::client::ClientBuilder;
+use websocket::ws::dataframe::DataFrame;
 
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 
+const CONNECTION: &'static str = "ws://127.0.0.1:5000/sc2api";
+
 #[derive(Debug)]
 pub struct Connection {
-    recv_ch: Receiver<response::Response>,
-    conn_thread: JoinHandle<()>,
-}
-
-pub struct Client {
-    tx: Sender<response::Response>,
-    out: ws::Sender,
-}
-
-impl Handler for Client {
-    fn on_open(&mut self, _: Handshake) -> WsResult<()> {
-        println!("on_open");
-
-        Ok(())
-    }
-
-    fn on_message(&mut self, msg: ws::Message) -> WsResult<()> {
-        if let Ok(r) = Response::decode(msg.into_data()) {
-            self.tx.send(r.response.unwrap()).unwrap();
-        };
-
-        Ok(())
-    }
+    recv_ch: Receiver<(OwnedMessage)>,
+    send_ch: Sender<(OwnedMessage)>,
+    recv_thread: JoinHandle<()>,
+    send_thread: JoinHandle<()>,
 }
 
 impl Connection {
     pub fn connect() -> Result<Connection> {
-        let (recv_tx, recv_rx) = channel();
+        let client = ClientBuilder::new(CONNECTION)
+                        .unwrap()
+                        .connect_insecure()
+                        .unwrap();
+        let (mut client_tx, mut client_rx) = client.split().unwrap();
 
-        let thread = thread::Builder::new()
-            .name("StarCraft connection".into())
-            .spawn(move || {
-                connect("ws://127.0.0.1:5000/sc2api", |out| {
-                    Client {
-                        tx: recv_tx.clone(),
-                        out: out,
+        let (recv_tx, recv_rx) = channel();
+        let recv_thread = thread::spawn(move || {
+            for message in client_tx.incoming_messages() {
+                let msg = match message {
+                    Ok(m) => m,
+                    Err(e) => {
+                        debug!("Receive Loop: {:?}", e);
+                        let _ = recv_tx.send(OwnedMessage::Close(None));
+                        return;
+                    },
+                };
+
+                match msg {
+                    OwnedMessage::Close(_) => {
+                        let _ = recv_tx.send(OwnedMessage::Close(None));
+                        return;
+                    },
+                    OwnedMessage::Binary(_)  => {
+                        recv_tx.send(msg).unwrap();
+                    },
+                    _ => { }, // `Text(_)`, `Ping(_)` and `Pong(_)`
+                }
+            }
+        });
+
+        let (send_tx, send_rx) = channel();
+        let send_thread = thread::spawn(move || {
+            loop {
+                let msg : OwnedMessage = match send_rx.recv() {
+                    Ok(m) => m,
+                    Err(e) => {
+                        debug!("Send Loop: {:?}", e);
+                        return;
+                    },
+                };
+
+                match client_rx.send_message(&msg) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        debug!("Send Loop: {:?}", e);
+                        return;
                     }
-                }).unwrap()
-            })
-            .unwrap();
+                }
+            }
+        });
 
         let connection = Connection {
             recv_ch: recv_rx,
-            conn_thread: thread,
+            send_ch: send_tx,
+            recv_thread: recv_thread,
+            send_thread: send_thread,
         };
 
         Ok(connection)
     }
 
-    pub fn recv_response(&mut self) -> Result<response::Response> {
-        // The `recv` method picks a message from the channel
-        // `recv` will block the current thread if there are no messages available
+    pub fn recv_response(&mut self) -> Result<raw_pb::Response> {
         match self.recv_ch.recv() {
-            Ok(r) => Ok(r),
-            Err(_) => panic!(),
+            Ok(m) => {
+                let r = raw_pb::Response::decode(m.take_payload()).expect("failed to decode...");
+                Ok(r)
+            },
+            _ => panic!(),
         }
+    }
+
+    pub fn send_request(&self, request: raw_pb::Request) {
+        let mut buf = vec![];
+        request.encode(&mut buf).expect("failed to encode...");
+        self.send_ch.send(OwnedMessage::Binary(buf)).expect("failed to send...");
     }
 }

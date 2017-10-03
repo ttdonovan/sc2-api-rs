@@ -6,7 +6,7 @@ extern crate log;
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
-extern crate ws;
+extern crate websocket;
 
 mod connection;
 mod errors;

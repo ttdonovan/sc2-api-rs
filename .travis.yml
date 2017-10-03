@@ -11,4 +11,4 @@ before_install:
 
 language: rust
 script:
-  - cargo run --example simple_bot
+  - cargo test
