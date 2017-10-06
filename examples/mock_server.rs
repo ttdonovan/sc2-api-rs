@@ -67,6 +67,10 @@ fn main() {
                                 println!("join game...");
                                 join_game_response()
                             },
+                            Request::Quit(_) => {
+                                println!("quit...");
+                                break
+                            }
                             _ => {
                                 println!("{:?}", request);
                                 ping_response()
@@ -78,6 +82,8 @@ fn main() {
                     }
                 }
             }
+
+            websocket.close(None).unwrap();
         });
     }
 }
