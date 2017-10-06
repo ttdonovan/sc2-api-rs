@@ -56,29 +56,25 @@ fn main() {
                     let req = raw_pb::Request::decode(msg.into_data()).expect("failed to decode...");
 
                     if let Some(request) = req.request {
-                        match request {
+                        let mut buf = vec![];
+
+                        let response = match request {
                             Request::CreateGame(_) => {
                                 println!("create game...");
-                                let mut buf = vec![];
-                                let response = create_game_response();
-                                response.encode(&mut buf).expect("failed to encode...");
-                                websocket.write_message(wsMessage::binary(buf)).unwrap();
+                                create_game_response()
                             },
                             Request::JoinGame(_) => {
                                 println!("join game...");
-                                let mut buf = vec![];
-                                let response = join_game_response();
-                                response.encode(&mut buf).expect("failed to encode...");
-                                websocket.write_message(wsMessage::binary(buf)).unwrap();
+                                join_game_response()
                             },
                             _ => {
                                 println!("{:?}", request);
-                                let mut buf = vec![];
-                                let response = ping_response();
-                                response.encode(&mut buf).expect("failed to encode...");
-                                websocket.write_message(wsMessage::binary(buf)).unwrap();
+                                ping_response()
                             },
-                        }
+                        };
+
+                        response.encode(&mut buf).expect("failed to encode...");
+                        websocket.write_message(wsMessage::binary(buf)).unwrap();
                     }
                 }
             }
