@@ -7,9 +7,42 @@ use std::thread::spawn;
 
 use sc2_api::raw_protobuf_api as raw_pb;
 use sc2_api::raw_protobuf_api::request::Request;
+use sc2_api::raw_protobuf_api::response::Response;
 
 use prost::Message;
 use tungstenite::accept;
+use tungstenite::Message as wsMessage;
+
+fn create_game_response() -> raw_pb::Response {
+    raw_pb::Response {
+        error: vec![],
+        status: Some(0),
+        response: Some(Response::CreateGame(raw_pb::ResponseCreateGame {
+            ..Default::default()
+        })),
+    }
+}
+
+fn join_game_response() -> raw_pb::Response {
+    raw_pb::Response {
+        error: vec![],
+        status: Some(0),
+        response: Some(Response::JoinGame(raw_pb::ResponseJoinGame {
+            player_id: Some(1),
+            ..Default::default()
+        })),
+    }
+}
+
+fn ping_response() -> raw_pb::Response {
+    raw_pb::Response {
+        error: vec![],
+        status: Some(0),
+        response: Some(Response::Ping(raw_pb::ResponsePing {
+            ..Default::default()
+        })),
+    }
+}
 
 fn main() {
     let server = TcpListener::bind("127.0.0.1:5000").unwrap();
@@ -24,9 +57,27 @@ fn main() {
 
                     if let Some(request) = req.request {
                         match request {
-                            Request::CreateGame(_) => println!("create game..."),
-                            Request::JoinGame(_) => println!("join game..."),
-                            _ => println!("{:?}", request),
+                            Request::CreateGame(_) => {
+                                println!("create game...");
+                                let mut buf = vec![];
+                                let response = create_game_response();
+                                response.encode(&mut buf).expect("failed to encode...");
+                                websocket.write_message(wsMessage::binary(buf)).unwrap();
+                            },
+                            Request::JoinGame(_) => {
+                                println!("join game...");
+                                let mut buf = vec![];
+                                let response = join_game_response();
+                                response.encode(&mut buf).expect("failed to encode...");
+                                websocket.write_message(wsMessage::binary(buf)).unwrap();
+                            },
+                            _ => {
+                                println!("{:?}", request);
+                                let mut buf = vec![];
+                                let response = ping_response();
+                                response.encode(&mut buf).expect("failed to encode...");
+                                websocket.write_message(wsMessage::binary(buf)).unwrap();
+                            },
                         }
                     }
                 }
